@@ -1,0 +1,4 @@
+[submodule "caustic_engineering"]
+    path = caustic_engineering
+    url = https://github.com/dylanmsu/caustic_engineering.git
+    branch = nodejs_addon
