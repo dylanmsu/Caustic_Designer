@@ -38,12 +38,6 @@ ipcMain.on('ipc-example', async (event, arg) => {
   event.reply('ipc-example', msgTemplate('pong'));
 });
 
-ipcMain.on('load-image', async (event, arg) => {
-  worker.postMessage({ type: 'loadImage', data: arg});
-  
-  //event.reply('image_loaded', 'pong');
-});
-
 // Listen for messages from the worker
 /*worker.on('message', message => {
   console.log('Received message from worker:', message);
@@ -90,7 +84,7 @@ const createWindow = async () => {
 
   mainWindow = new BrowserWindow({
     show: false,
-    width: 990,
+    width: 992,
     height: 774,
     icon: getAssetPath('icon.png'),
     resizable: false,
@@ -130,23 +124,15 @@ const createWindow = async () => {
   mainWindow.setMenu(null)
 
   worker.on('message', message => {
-    if (message.type === 'imageUrl') {
-      mainWindow.webContents.send('asynchronous-message', {type: 'image-preview', data: message.data});
-    }
-  
-    if (message.type === 'doneTransport') {
-    }
-  
-    if (message.type === 'doneHeight') {
-    }
-  
-    if (message.type === 'stepSize') {
-    }
-  
-    if (message.type === 'ok') {
-      console.log("ok")
-    }
+      mainWindow.webContents.send('asynchronous-message', message);
   });
+
+  ipcMain.on('asynchronous-message', async (event, arg) => {
+      worker.postMessage(arg);
+      if (arg.type === 'start-transport') {
+        console.log(arg)
+      }
+  })
 
   // Remove this if your app does not use auto updates
   // eslint-disable-next-line
