@@ -14,6 +14,13 @@ import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import MenuBuilder from './menu';
 import { resolveHtmlPath } from './util';
+import { Worker } from "worker_threads";
+
+const worker = new Worker('./src/workers/caustic_design_worker.js')
+
+/*worker.onmessage = function(event) {
+  console.log(event.data)
+};*/
 
 class AppUpdater {
   constructor() {
@@ -30,6 +37,18 @@ ipcMain.on('ipc-example', async (event, arg) => {
   console.log(msgTemplate(arg));
   event.reply('ipc-example', msgTemplate('pong'));
 });
+
+ipcMain.on('load-image', async (event, arg) => {
+  worker.postMessage({ type: 'loadImage', data: arg});
+  
+  //event.reply('image_loaded', 'pong');
+});
+
+// Listen for messages from the worker
+/*worker.on('message', message => {
+  console.log('Received message from worker:', message);
+  // Handle the message as needed
+});*/
 
 if (process.env.NODE_ENV === 'production') {
   const sourceMapSupport = require('source-map-support');
@@ -71,9 +90,10 @@ const createWindow = async () => {
 
   mainWindow = new BrowserWindow({
     show: false,
-    width: 1024,
-    height: 728,
+    width: 990,
+    height: 774,
     icon: getAssetPath('icon.png'),
+    resizable: false,
     webPreferences: {
       preload: app.isPackaged
         ? path.join(__dirname, 'preload.js')
@@ -108,6 +128,25 @@ const createWindow = async () => {
   });
 
   mainWindow.setMenu(null)
+
+  worker.on('message', message => {
+    if (message.type === 'imageUrl') {
+      mainWindow.webContents.send('asynchronous-message', {type: 'image-preview', data: message.data});
+    }
+  
+    if (message.type === 'doneTransport') {
+    }
+  
+    if (message.type === 'doneHeight') {
+    }
+  
+    if (message.type === 'stepSize') {
+    }
+  
+    if (message.type === 'ok') {
+      console.log("ok")
+    }
+  });
 
   // Remove this if your app does not use auto updates
   // eslint-disable-next-line
