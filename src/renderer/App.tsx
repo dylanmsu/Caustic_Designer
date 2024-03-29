@@ -2,14 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 //import preview from "../../assets/siggraph_parameterization.svg"
 import {useNavigate, MemoryRouter as Router, Routes, Route } from 'react-router-dom';
-import { Checkbox, FormControlLabel, FormGroup, Button, TextField, Drawer, AppBar, Divider, Toolbar, CssBaseline, Typography, Box } from '@mui/material';
+import { Checkbox, FormControlLabel, FormGroup, Button, TextField, Drawer, AppBar, Divider, Toolbar, CssBaseline, Typography, Box, CircularProgress } from '@mui/material';
 
 function TransportPage(props: any) {
+  const [runningTransport, setRunningTransport] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [image, setImage] = useState(
-      "https://c.tenor.com/I6kN-6X7nhAAAAAj/loading-buffering.gif"
-  );
+  const [image, setImage] = useState(null);
 
   const drawerWidth = 300;
   const topBarWidth = 50;
@@ -33,6 +32,9 @@ function TransportPage(props: any) {
     if (message.type === 'step-size') {
       console.log(message.data)
     }
+    if (message.type === 'transport-done') {
+      setRunningTransport(false);
+    }
   });
 
   let mesh_resolution: Number = 100;
@@ -42,6 +44,7 @@ function TransportPage(props: any) {
 
   const startTransportSolver = () => {
     window.electron.ipcRenderer.sendMessage('asynchronous-message', {type: 'start-transport', data: {mesh_resolution: mesh_resolution, lens_width: lens_width}});
+    setRunningTransport(true);
   };
 
   const handleImageChange = (event: any) => {
@@ -96,8 +99,9 @@ function TransportPage(props: any) {
         <TextField size="small" required onChange = {(event)=> lens_thickness = Number(event.target.value)} label="Lens thickness" variant="filled" fullWidth defaultValue={lens_thickness}/>
         <TextField size="small" required onChange = {(event)=> lens_focal = Number(event.target.value)} label="Focal length" variant="filled" fullWidth defaultValue={lens_focal}/>
         <FormControlLabel label='Autostart height solver' control={<Checkbox defaultChecked/>}/>
-        <Button type="submit" variant="contained" onClick={startTransportSolver}>
-          start transport solver
+        <Button type="submit" variant="contained" onClick={startTransportSolver} disabled={runningTransport ? 'disabled' : null}>
+          {runningTransport && <><CircularProgress size={20}/> Running...</>}
+          {!runningTransport && <>Run transport algorithm</>}
         </Button>
         <Button variant="contained" disabled>
           start height solver

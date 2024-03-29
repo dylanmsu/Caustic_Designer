@@ -60,7 +60,7 @@ parentPort.on('message', async message => {
             parentPort.postMessage({type: 'step-size', data: Math.round(step_size * 10000) / 10000});
             
             // convergance check
-            if (step_size < 0.005) break;
+            if (step_size < 0.0005) break;
         }
         parentPort.postMessage({type: 'transport-done'})
     }
