@@ -6,8 +6,8 @@ import { Checkbox, FormControlLabel, FormGroup, Button, TextField, Drawer, AppBa
 
 function TransportPage(props: any) {
   const [runningTransport, setRunningTransport] = useState(false);
+  const [enableHeight, setEnableHeight] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
-  const [loading, setLoading] = useState(true);
   const [image, setImage] = useState(null);
 
   const drawerWidth = 300;
@@ -21,21 +21,29 @@ function TransportPage(props: any) {
 
   //window.electron.ipcRenderer.sendMessage('asynchronous-message', {type: 'get-param', data: ''});
 
-  window.electron.ipcRenderer.on('asynchronous-message', function (message: any) {
-    if (message.type === 'svg-data') {
-      console.log("svg data received");
-      setImage("data:image/svg+xml," + message.data);
+  useEffect(() => {
+    const amUnsubscribe = window.electron.ipcRenderer.on('asynchronous-message', function (message: any) {
+      if (message.type === 'svg-data') {
+        console.log("svg data received");
+        setImage("data:image/svg+xml," + message.data);
+      }
+      if (message.type === 'imageUrl') {
+        setSelectedImage(message.data);
+      }
+      if (message.type === 'step-size') {
+        console.log(message.data)
+      }
+      if (message.type === 'transport-done') {
+        setRunningTransport(false);
+        setEnableHeight(true);
+      }
+    });
+    
+    return () => {
+      amUnsubscribe();
     }
-    if (message.type === 'imageUrl') {
-      setSelectedImage(message.data);
-    }
-    if (message.type === 'step-size') {
-      console.log(message.data)
-    }
-    if (message.type === 'transport-done') {
-      setRunningTransport(false);
-    }
-  });
+  
+  }, []);
 
   let mesh_resolution: Number = 100;
   let lens_width: Number = 1.0;
@@ -87,7 +95,7 @@ function TransportPage(props: any) {
           onChange={handleImageChange}
         />
         <label htmlFor="contained-button-file">
-          <Button variant="contained" component="span" color='primary' style={{width: `calc(${drawerWidth}px - 20px)`, margin: '10px'}}>
+          <Button variant="contained" component="span" color='primary' style={{width: `calc(${drawerWidth}px - 20px)`, margin: '10px'}} disabled={runningTransport ? 'disabled' : null}>
             Load Image
           </Button>
         </label>
@@ -103,7 +111,7 @@ function TransportPage(props: any) {
           {runningTransport && <><CircularProgress size={20}/> Running...</>}
           {!runningTransport && <>Run transport algorithm</>}
         </Button>
-        <Button variant="contained" disabled>
+        <Button variant="contained" disabled={!enableHeight ? 'disabled' : null}>
           start height solver
         </Button>
       </FormGroup>

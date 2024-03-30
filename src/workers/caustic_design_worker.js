@@ -20,11 +20,23 @@ parentPort.on('message', async message => {
                 let red = pixels.get(x, y, 0);
                 let green = pixels.get(x, y, 1);
                 let blue = pixels.get(x, y, 2);
-                pixel_intensities_1d.push(((0.299 * red) + (0.587 * green) + (0.114 * blue)) / 255.0);
+                pixel_intensities_1d.push(((0.299 * red) + (0.587 * green) + (0.114 * blue)) / 255);
             }
         }
 
         aspect_ratio = width / height;
+        
+        /*let max_value = pixel_intensities_1d[0];
+        let min_value = pixel_intensities_1d[0];
+
+        for (let i=0; i<width*height; i++) {
+            if (min_value >= pixel_intensities_1d[i]) {min_value = pixel_intensities_1d[i];}
+            if (max_value <= pixel_intensities_1d[i]) {max_value = pixel_intensities_1d[i];}
+        }
+
+        for (let i=0; i<width*height; i++) {
+            pixel_intensities_1d[i] = (pixel_intensities_1d[i] - min_value) / (max_value - min_value);
+        }*/
         
         var ret = loadImage(pixel_intensities_1d, width, height);
 
@@ -62,6 +74,7 @@ parentPort.on('message', async message => {
             // convergance check
             if (step_size < 0.0005) break;
         }
+
         parentPort.postMessage({type: 'transport-done'})
     }
 
