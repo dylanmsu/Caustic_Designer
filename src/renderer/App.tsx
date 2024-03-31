@@ -8,6 +8,7 @@ function TransportPage(props: any) {
   const [runningTransport, setRunningTransport] = useState(false);
   const [enableHeight, setEnableHeight] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
+  const [runningHeight, setRunningHeight] = useState(false);
   const [image, setImage] = useState(null);
 
   const drawerWidth = 300;
@@ -20,6 +21,15 @@ function TransportPage(props: any) {
   });
 
   //window.electron.ipcRenderer.sendMessage('asynchronous-message', {type: 'get-param', data: ''});
+
+  // renderer javascript file
+  function saveFile(content: any) {
+    const element = document.createElement("a");
+    const file = new Blob([content], {type: "text/plain"});
+    element.href = URL.createObjectURL(file);
+    element.download = "caustic_lens.obj";
+    element.click();
+  }
 
   useEffect(() => {
     const amUnsubscribe = window.electron.ipcRenderer.on('asynchronous-message', function (message: any) {
@@ -37,8 +47,12 @@ function TransportPage(props: any) {
         setRunningTransport(false);
         setEnableHeight(true);
       }
+      if (message.type === 'height-done') {
+        setRunningHeight(false)
+        saveFile(message.data);
+      }
     });
-    
+
     return () => {
       amUnsubscribe();
     }
@@ -53,6 +67,11 @@ function TransportPage(props: any) {
   const startTransportSolver = () => {
     window.electron.ipcRenderer.sendMessage('asynchronous-message', {type: 'start-transport', data: {mesh_resolution: mesh_resolution, lens_width: lens_width}});
     setRunningTransport(true);
+  };
+
+  const startHeightSolver = () => {
+    window.electron.ipcRenderer.sendMessage('asynchronous-message', {type: 'start-height', data: {focal_l: lens_focal, thickness: lens_thickness}});
+    setRunningHeight(true);
   };
 
   const handleImageChange = (event: any) => {
@@ -107,12 +126,13 @@ function TransportPage(props: any) {
         <TextField size="small" required onChange = {(event)=> lens_thickness = Number(event.target.value)} label="Lens thickness" variant="filled" fullWidth defaultValue={lens_thickness}/>
         <TextField size="small" required onChange = {(event)=> lens_focal = Number(event.target.value)} label="Focal length" variant="filled" fullWidth defaultValue={lens_focal}/>
         <FormControlLabel label='Autostart height solver' control={<Checkbox defaultChecked/>}/>
-        <Button type="submit" variant="contained" onClick={startTransportSolver} disabled={runningTransport ? 'disabled' : null}>
+        <Button variant="contained" onClick={startTransportSolver} disabled={runningTransport ? 'disabled' : null}>
           {runningTransport && <><CircularProgress size={20}/> Running...</>}
-          {!runningTransport && <>Run transport algorithm</>}
+          {!runningTransport && <>Run transport solver</>}
         </Button>
-        <Button variant="contained" disabled={!enableHeight ? 'disabled' : null}>
-          start height solver
+        <Button variant="contained" onClick={startHeightSolver} disabled={(!enableHeight && !runningHeight) ? 'disabled' : null}>
+          {runningHeight && <><CircularProgress size={20}/> Running...</>}
+          {!runningHeight && <>Run height solver</>}
         </Button>
       </FormGroup>
       <Divider />

@@ -2,7 +2,7 @@ const { getPixels, savePixels } = require('ndarray-pixels')
 const ndarray = require('ndarray')
 const { parentPort } = require('worker_threads');
 
-const {loadImage, runTransportIteration, runHeightIteration, getErrorGrid, initializeTransportSolver, initializeHeightSolver, getParameterizationSvg} = require('C:/Users/dylan/Documents/Caustic_Designer/caustic_engineering/build/Release/CausticEngineering.node');
+const {loadImage, runTransportIteration, runHeightIteration, getErrorGrid, initializeTransportSolver, initializeHeightSolver, getParameterizationSvg, getObjString} = require('C:/Users/dylan/Documents/Caustic_Designer/caustic_engineering/build/Release/CausticEngineering.node');
 
 let aspect_ratio = 0.0;
 
@@ -78,17 +78,17 @@ parentPort.on('message', async message => {
         parentPort.postMessage({type: 'transport-done'})
     }
 
-    /*if (message.type === 'startHeight') {
-        initializeHeightSolver(message.data, message[2]);
+    if (message.type === 'start-height') {
+        initializeHeightSolver(message.data.focal_l, message.data.thickness);
 
         for (let i=0; i<2; i++) {
             let step_size = runHeightIteration();
 
-            postMessage(['stepSize', Math.round(step_size * 10000) / 10000]);
+            parentPort.postMessage({type: 'step-size', data: Math.round(step_size * 10000) / 10000});
         }
 
-        postMessage(['doneHeight'])
-    }*/
+        parentPort.postMessage({type: 'height-done', data: getObjString()});
+    }
 
     if (message.type === 'get-svg-param') {
         initializeTransportSolver(100, 1, 1);
