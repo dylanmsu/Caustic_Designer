@@ -9,10 +9,17 @@ function TransportPage(props: any) {
   const [enableHeight, setEnableHeight] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
   const [runningHeight, setRunningHeight] = useState(false);
+  const [autoStart, setAutoStart] = useState(false)
   const [image, setImage] = useState(null);
 
   const drawerWidth = 300;
   const topBarWidth = 50;
+
+  let mesh_resolution: Number = 100;
+  let lens_width: Number = 0.5;
+  let lens_thickness: Number = 0.2;
+  let lens_focal: Number = 1.0;
+  let auto_start: boolean = true;
 
   const darkTheme = createTheme({
     palette: {
@@ -20,7 +27,15 @@ function TransportPage(props: any) {
     },
   });
 
-  //window.electron.ipcRenderer.sendMessage('asynchronous-message', {type: 'get-param', data: ''});
+  const startTransportSolver = () => {
+    window.electron.ipcRenderer.sendMessage('asynchronous-message', {type: 'start-transport', data: {mesh_resolution: mesh_resolution, lens_width: lens_width}});
+    setRunningTransport(true);
+  };
+
+  const startHeightSolver = () => {
+    window.electron.ipcRenderer.sendMessage('asynchronous-message', {type: 'start-height', data: {focal_l: lens_focal, thickness: lens_thickness}});
+    setRunningHeight(true);
+  };
 
   // renderer javascript file
   function saveFile(content: any) {
@@ -34,7 +49,6 @@ function TransportPage(props: any) {
   useEffect(() => {
     const amUnsubscribe = window.electron.ipcRenderer.on('asynchronous-message', function (message: any) {
       if (message.type === 'svg-data') {
-        console.log("svg data received");
         setImage("data:image/svg+xml," + message.data);
       }
       if (message.type === 'imageUrl') {
@@ -46,9 +60,12 @@ function TransportPage(props: any) {
       if (message.type === 'transport-done') {
         setRunningTransport(false);
         setEnableHeight(true);
+        if (auto_start) {
+          startHeightSolver();
+        }
       }
       if (message.type === 'height-done') {
-        setRunningHeight(false)
+        setRunningHeight(false);
         saveFile(message.data);
       }
     });
@@ -58,21 +75,6 @@ function TransportPage(props: any) {
     }
   
   }, []);
-
-  let mesh_resolution: Number = 100;
-  let lens_width: Number = 1.0;
-  let lens_thickness: Number = 0.2;
-  let lens_focal: Number = 1.0;
-
-  const startTransportSolver = () => {
-    window.electron.ipcRenderer.sendMessage('asynchronous-message', {type: 'start-transport', data: {mesh_resolution: mesh_resolution, lens_width: lens_width}});
-    setRunningTransport(true);
-  };
-
-  const startHeightSolver = () => {
-    window.electron.ipcRenderer.sendMessage('asynchronous-message', {type: 'start-height', data: {focal_l: lens_focal, thickness: lens_thickness}});
-    setRunningHeight(true);
-  };
 
   const handleImageChange = (event: any) => {
     const file = event.target.files[0];
@@ -85,6 +87,10 @@ function TransportPage(props: any) {
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  const handleCheckChange = (event: any) => {
+    setAutoStart(event.target.checked);
   };
 
   const drawer = (
@@ -114,7 +120,7 @@ function TransportPage(props: any) {
           onChange={handleImageChange}
         />
         <label htmlFor="contained-button-file">
-          <Button variant="contained" component="span" color='primary' style={{width: `calc(${drawerWidth}px - 20px)`, margin: '10px'}} disabled={runningTransport ? 'disabled' : null}>
+          <Button variant="contained" component="span" color='primary' style={{width: `calc(${drawerWidth}px - 20px)`, margin: '10px'}} disabled={(runningTransport || runningHeight) ? 'disabled' : null}>
             Load Image
           </Button>
         </label>
@@ -125,12 +131,12 @@ function TransportPage(props: any) {
         <TextField size="small" required onChange = {(event)=> lens_width = Number(event.target.value)} label="Lens width" variant="filled" fullWidth defaultValue={lens_width}/>
         <TextField size="small" required onChange = {(event)=> lens_thickness = Number(event.target.value)} label="Lens thickness" variant="filled" fullWidth defaultValue={lens_thickness}/>
         <TextField size="small" required onChange = {(event)=> lens_focal = Number(event.target.value)} label="Focal length" variant="filled" fullWidth defaultValue={lens_focal}/>
-        <FormControlLabel label='Autostart height solver' control={<Checkbox defaultChecked/>}/>
-        <Button variant="contained" onClick={startTransportSolver} disabled={runningTransport ? 'disabled' : null}>
+        <FormControlLabel label='Autostart height solver' control={<Checkbox defaultChecked onChange={(event)=> auto_start = Boolean(event.target.value)}/>}/>
+        <Button variant="contained" onClick={startTransportSolver} disabled={(runningTransport || runningHeight || (selectedImage === null)) ? 'disabled' : null}>
           {runningTransport && <><CircularProgress size={20}/> Running...</>}
           {!runningTransport && <>Run transport solver</>}
         </Button>
-        <Button variant="contained" onClick={startHeightSolver} disabled={(!enableHeight && !runningHeight) ? 'disabled' : null}>
+        <Button variant="contained" onClick={startHeightSolver} disabled={(!enableHeight || runningHeight) ? 'disabled' : null}>
           {runningHeight && <><CircularProgress size={20}/> Running...</>}
           {!runningHeight && <>Run height solver</>}
         </Button>

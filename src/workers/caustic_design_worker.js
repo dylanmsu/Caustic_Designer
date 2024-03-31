@@ -2,7 +2,7 @@ const { getPixels, savePixels } = require('ndarray-pixels')
 const ndarray = require('ndarray')
 const { parentPort } = require('worker_threads');
 
-const {loadImage, runTransportIteration, runHeightIteration, getErrorGrid, initializeTransportSolver, initializeHeightSolver, getParameterizationSvg, getObjString} = require('C:/Users/dylan/Documents/Caustic_Designer/caustic_engineering/build/Release/CausticEngineering.node');
+const {loadImage, runTransportIteration, runHeightIteration, getErrorGrid, initializeTransportSolver, initializeHeightSolver, getParameterizationSvg, getObjString} = require('../../caustic_engineering/build/Release/CausticEngineering.node');
 
 let aspect_ratio = 0.0;
 
