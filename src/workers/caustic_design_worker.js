@@ -52,7 +52,7 @@ parentPort.on('message', async message => {
         for (let i=0; i<100; i++) {
             let step_size = runTransportIteration();
     
-            let grid = getErrorGrid();
+            /*let grid = getErrorGrid();
     
             let output = ndarray(new Float32Array((message.data.mesh_resolution*4) * (message.data.mesh_resolution*4 * aspect_ratio) * 4), [message.data.mesh_resolution*4, message.data.mesh_resolution*4*aspect_ratio, 4]);
             for (let y = 0; y < message.data.mesh_resolution*4*aspect_ratio; ++y) {
@@ -66,7 +66,7 @@ parentPort.on('message', async message => {
         
             const imageOut = await savePixels(output, 'image/png');
         
-            const imageDataURL = `data:image/png;base64,${imageOut.toString('base64')}`;
+            const imageDataURL = `data:image/png;base64,${imageOut.toString('base64')}`;*/
         
             parentPort.postMessage({type: 'svg-data', data: getParameterizationSvg()});
             parentPort.postMessage({type: 'step-size', data: Math.round(step_size * 10000) / 10000});
@@ -81,7 +81,7 @@ parentPort.on('message', async message => {
     if (message.type === 'start-height') {
         initializeHeightSolver(message.data.focal_l, message.data.thickness);
 
-        for (let i=0; i<2; i++) {
+        for (let i=0; i<5; i++) {
             let step_size = runHeightIteration();
 
             parentPort.postMessage({type: 'step-size', data: Math.round(step_size * 10000) / 10000});
