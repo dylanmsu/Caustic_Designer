@@ -180,12 +180,18 @@
   "build": {
     "productName": "ElectronReact",
     "appId": "org.erb.ElectronReact",
-    "asar": true,
-    "asarUnpack": "**\\*.{node,dll}",
+    "asar": false,
+    "asarUnpack": [
+      "**\\*.{node,dll}"
+    ],
     "files": [
       "dist",
       "node_modules",
       "package.json"
+    ],
+    "extraFiles": [
+      "src/workers/caustic_design_worker.ts",
+      "caustic_engineering/build/Release/CausticEngineering.node"
     ],
     "afterSign": ".erb/scripts/notarize.js",
     "mac": {

@@ -15,8 +15,10 @@ import log from 'electron-log';
 import MenuBuilder from './menu';
 import { resolveHtmlPath } from './util';
 import { Worker } from "worker_threads";
+import { getPixels, savePixels } from 'ndarray-pixels'
+import ndarray from 'ndarray'
 
-const worker = new Worker('./src/workers/caustic_design_worker.js')
+const worker = new Worker('./src/workers/caustic_design_worker.ts')
 
 /*worker.onmessage = function(event) {
   console.log(event.data)
@@ -128,9 +130,25 @@ const createWindow = async () => {
   });
 
   ipcMain.on('asynchronous-message', async (event, arg) => {
-      worker.postMessage(arg);
-      if (arg.type === 'start-transport') {
-        console.log(arg)
+      if (arg.type === 'loadImage') {
+        const imageBuffer = Buffer.from(arg.data.replace(/^data:image\/\w+;base64,/, ''), 'base64');
+
+        const pixels = await getPixels(imageBuffer, 'image/png'); // Uint8Array -> ndarray
+
+        let pixel_intensities_1d = [];
+        const [width, height] = pixels.shape;
+        for (let x = 0; x < width; ++x) {
+            for (let y = 0; y < height; ++y) {
+                let red = pixels.get(x, y, 0);
+                let green = pixels.get(x, y, 1);
+                let blue = pixels.get(x, y, 2);
+                pixel_intensities_1d.push(((0.299 * red) + (0.587 * green) + (0.114 * blue)) / 255);
+            }
+        }
+
+        worker.postMessage({type: 'loadImage', data: {imageBuffer: arg.data, ImageData: pixel_intensities_1d, width: width, height: height}})
+      } else {
+        worker.postMessage(arg);
       }
   })
 

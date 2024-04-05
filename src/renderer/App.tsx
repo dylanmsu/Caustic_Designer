@@ -17,7 +17,7 @@ function TransportPage(props: any) {
 
   let mesh_resolution: Number = 100;
   let lens_width: Number = 0.5;
-  let lens_thickness: Number = 0.2;
+  let lens_thickness: Number = 0.1;
   let lens_focal: Number = 1.0;
   let auto_start: boolean = true;
 

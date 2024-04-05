@@ -1,5 +1,3 @@
-const { getPixels, savePixels } = require('ndarray-pixels')
-const ndarray = require('ndarray')
 const { parentPort } = require('worker_threads');
 
 const {loadImage, runTransportIteration, runHeightIteration, getErrorGrid, initializeTransportSolver, initializeHeightSolver, getParameterizationSvg, getObjString} = require('../../caustic_engineering/build/Release/CausticEngineering.node');
@@ -8,23 +6,9 @@ let aspect_ratio = 0.0;
 
 parentPort.on('message', async message => {
     if (message.type === 'loadImage') {
-    //if (message[0] === 'loadImage') {
-        const imageBuffer = Buffer.from(message.data.replace(/^data:image\/\w+;base64,/, ''), 'base64');
+        
 
-        const pixels = await getPixels(imageBuffer, 'image/png'); // Uint8Array -> ndarray
-
-        let pixel_intensities_1d = [];
-        const [width, height] = pixels.shape;
-        for (let x = 0; x < width; ++x) {
-            for (let y = 0; y < height; ++y) {
-                let red = pixels.get(x, y, 0);
-                let green = pixels.get(x, y, 1);
-                let blue = pixels.get(x, y, 2);
-                pixel_intensities_1d.push(((0.299 * red) + (0.587 * green) + (0.114 * blue)) / 255);
-            }
-        }
-
-        aspect_ratio = width / height;
+        aspect_ratio = message.data.width / message.data.height;
         
         /*let max_value = pixel_intensities_1d[0];
         let min_value = pixel_intensities_1d[0];
@@ -38,10 +22,10 @@ parentPort.on('message', async message => {
             pixel_intensities_1d[i] = (pixel_intensities_1d[i] - min_value) / (max_value - min_value);
         }*/
         
-        var ret = loadImage(pixel_intensities_1d, width, height);
+        var ret = loadImage(message.data.ImageData, message.data.width, message.data.height);
 
         //parentPort.postMessage(['ok'])
-        parentPort.postMessage({type: 'imageUrl', data: message.data});
+        parentPort.postMessage({type: 'imageUrl', data: message.data.imageBuffer});
     }
 
     if (message.type === 'start-transport') {
