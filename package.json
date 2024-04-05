@@ -178,8 +178,8 @@
     "webpack-merge": "^5.9.0"
   },
   "build": {
-    "productName": "ElectronReact",
-    "appId": "org.erb.ElectronReact",
+    "productName": "CausticDesigner",
+    "appId": "org.erb.CausticDesigner",
     "asar": false,
     "asarUnpack": [
       "**\\*.{node,dll}"
