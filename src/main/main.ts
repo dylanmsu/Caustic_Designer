@@ -18,7 +18,14 @@ import { Worker } from "worker_threads";
 import { getPixels, savePixels } from 'ndarray-pixels'
 import ndarray from 'ndarray'
 
-const worker = new Worker('./src/workers/caustic_design_worker.ts')
+let workerPath = ""
+if (process.env.NODE_ENV === 'production') {
+  workerPath = path.join(__dirname, '../../../../src/workers/caustic_design_worker.ts');
+} else if (process.env.NODE_ENV === 'development') {
+  workerPath = path.join(__dirname, '../workers/caustic_design_worker.ts');
+}
+
+const worker = new Worker(workerPath);
 
 /*worker.onmessage = function(event) {
   console.log(event.data)
