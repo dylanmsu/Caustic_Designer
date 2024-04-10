@@ -9,33 +9,22 @@ function TransportPage(props: any) {
   const [enableHeight, setEnableHeight] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
   const [runningHeight, setRunningHeight] = useState(false);
-  const [autoStart, setAutoStart] = useState(false)
+  const [autoStart, setAutoStart] = useState(false);
   const [image, setImage] = useState(null);
+  
+  const [meshResolution, setMeshResolution] = useState(100);
+  const [lensWidth, setLensWidth] = useState(0.5);
+  const [lensThickness, setLensThickness] = useState(0.1);
+  const [lensFocal, setLensFocal] = useState(1.0);
 
   const drawerWidth = 300;
   const topBarWidth = 50;
-
-  let mesh_resolution: Number = 100;
-  let lens_width: Number = 0.5;
-  let lens_thickness: Number = 0.1;
-  let lens_focal: Number = 1.0;
-  let auto_start: boolean = true;
 
   const darkTheme = createTheme({
     palette: {
       mode: 'dark',
     },
   });
-
-  const startTransportSolver = () => {
-    window.electron.ipcRenderer.sendMessage('asynchronous-message', {type: 'start-transport', data: {mesh_resolution: mesh_resolution, lens_width: lens_width}});
-    setRunningTransport(true);
-  };
-
-  const startHeightSolver = () => {
-    window.electron.ipcRenderer.sendMessage('asynchronous-message', {type: 'start-height', data: {focal_l: lens_focal, thickness: lens_thickness}});
-    setRunningHeight(true);
-  };
 
   // renderer javascript file
   function saveFile(content: any) {
@@ -45,6 +34,18 @@ function TransportPage(props: any) {
     element.download = "caustic_lens.obj";
     element.click();
   }
+
+  const startTransportSolver = () => {
+    window.electron.ipcRenderer.sendMessage('asynchronous-message', {type: 'start-transport', data: {mesh_resolution: meshResolution, lens_width: lensWidth}});
+    setRunningTransport(true);
+  };
+
+  const startHeightSolver = () => {
+    const data = {focal_l: lensFocal, thickness: lensThickness};
+    console.log(data);
+    window.electron.ipcRenderer.sendMessage('asynchronous-message', {type: 'start-height', data: data});
+    setRunningHeight(true);
+  };
 
   useEffect(() => {
     const amUnsubscribe = window.electron.ipcRenderer.on('asynchronous-message', function (message: any) {
@@ -60,7 +61,7 @@ function TransportPage(props: any) {
       if (message.type === 'transport-done') {
         setRunningTransport(false);
         setEnableHeight(true);
-        if (auto_start) {
+        if (autoStart) {
           startHeightSolver();
         }
       }
@@ -74,7 +75,7 @@ function TransportPage(props: any) {
       amUnsubscribe();
     }
   
-  }, []);
+  }, [autoStart, lensThickness,lensFocal]);
 
   const handleImageChange = (event: any) => {
     const file = event.target.files[0];
@@ -87,10 +88,6 @@ function TransportPage(props: any) {
       };
       reader.readAsDataURL(file);
     }
-  };
-
-  const handleCheckChange = (event: any) => {
-    setAutoStart(event.target.checked);
   };
 
   const drawer = (
@@ -127,18 +124,16 @@ function TransportPage(props: any) {
       </div>
       <Divider />
       <FormGroup sx={{ '& > :not(style)': { width: `calc(${drawerWidth}px - 21px)`, mx: '10px', mt: '10px'}, mb: '10px' }} >
-        <TextField size="small" required onChange = {(event)=> mesh_resolution = Number(event.target.value)} label="Mesh x resolution" variant="filled" fullWidth defaultValue={mesh_resolution}/>
-        <TextField size="small" required onChange = {(event)=> lens_width = Number(event.target.value)} label="Lens width" variant="filled" fullWidth defaultValue={lens_width}/>
-        <TextField size="small" required onChange = {(event)=> lens_thickness = Number(event.target.value)} label="Lens thickness" variant="filled" fullWidth defaultValue={lens_thickness}/>
-        <TextField size="small" required onChange = {(event)=> lens_focal = Number(event.target.value)} label="Focal length" variant="filled" fullWidth defaultValue={lens_focal}/>
-        <FormControlLabel label='Autostart height solver' control={<Checkbox defaultChecked onChange={(event)=> auto_start = Boolean(event.target.value)}/>}/>
-        <Button variant="contained" onClick={startTransportSolver} disabled={(runningTransport || runningHeight || (selectedImage === null)) ? 'disabled' : null}>
-          {runningTransport && <><CircularProgress size={20}/> Running...</>}
-          {!runningTransport && <>Run transport solver</>}
+        <TextField size="small" required onChange={(event) => setMeshResolution(Number(event.target.value))} label="Mesh x resolution" variant="filled" fullWidth defaultValue={meshResolution}/>
+        <TextField size="small" required onChange={(event) => setLensWidth(Number(event.target.value))} label="Lens width" variant="filled" fullWidth defaultValue={lensWidth}/>
+        <TextField size="small" required onChange={(event) => setLensThickness(Number(event.target.value))} label="Lens thickness" variant="filled" fullWidth defaultValue={lensThickness}/>
+        <TextField size="small" required onChange={(event) => setLensFocal(Number(event.target.value))} label="Focal length" variant="filled" fullWidth defaultValue={lensFocal}/>
+        <FormControlLabel label='Autostart height solver' control={<Checkbox onChange={(event) => setAutoStart(Boolean(event.target.checked))} checked={autoStart} />}/>
+        <Button variant="contained" onClick={() => {startTransportSolver();}} disabled={runningTransport || runningHeight || selectedImage === null}>
+          {runningTransport ? (<> <CircularProgress size={20} /> Running... </>) : (<>Run transport solver</>)}
         </Button>
-        <Button variant="contained" onClick={startHeightSolver} disabled={(!enableHeight || runningHeight) ? 'disabled' : null}>
-          {runningHeight && <><CircularProgress size={20}/> Running...</>}
-          {!runningHeight && <>Run height solver</>}
+        <Button variant="contained" onClick={() => {startHeightSolver();}} disabled={(!enableHeight || runningHeight) ? 'disabled' : null}>
+          {runningHeight ? (<> <CircularProgress size={20} /> Running... </>) : (<>Run height solver</>)}
         </Button>
       </FormGroup>
       <Divider />
