@@ -15,6 +15,8 @@ Result simulated with Blender using LuxRender:
 - can export the the inverse transport map
 - multithreaded poisson solver
 
+## Installation
+Portable builds for Windows x64 and Unix can be found under [Releases](https://github.com/dylanmsu/Caustic_Designer/releases/tag/release_V1_0_1).
 
 ## Usage
 
